@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人导航站</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">🧭</span>个人导航站</div>
+  <input id="search" type="search" placeholder="搜索工具名称 / 描述 / 地址…">
+  <nav>
+    <button data-tab="home" class="active">导航</button>
+    <button data-tab="procs" id="nav-procs">进程管理</button>
+    <button data-tab="admin">工具管理</button>
+  </nav>
+</header>
+
+<main id="main"><div class="empty">加载中…</div></main>
+
+<!-- 工具编辑 -->
+<dialog id="dlg-tool">
+  <form id="tool-form">
+    <h3 id="tool-form-title">新增工具</h3>
+    <div class="grid2">
+      <label>名称 *<input id="f-name" placeholder="我的工具"></label>
+      <label>分组<input id="f-group" list="group-list" placeholder="开发工具">
+        <datalist id="group-list"></datalist></label>
+      <label>图标（emoji，点「选择」挑选，也可手输）
+        <div class="icon-row">
+          <input id="f-icon" placeholder="🔧">
+          <button type="button" class="btn" id="icon-pick">选择</button>
+        </div>
+      </label>
+      <label>排序值（小在前）<input id="f-sort" type="number" value="0"></label>
+    </div>
+    <label>描述<input id="f-desc" placeholder="一句话说明这个工具"></label>
+    <label>打开地址 URL（点卡片时打开；留空 = 仅启动不打开；自动补 http:// 前缀）
+      <input id="f-url" placeholder="http://127.0.0.1:8000"></label>
+    <label>启动命令（后台静默执行；留空 = 纯链接）
+      <input id="f-cmd" placeholder="例如：npm run dev 或 ammp serve"></label>
+    <div class="grid2">
+      <label>工作目录（启动命令的执行目录）<input id="f-cwd" placeholder="D:\projects\mytool"></label>
+      <label>服务端口（就绪探测 + 防重复启动）<input id="f-port" type="number" placeholder="8000"></label>
+      <label>启动超时（毫秒）<input id="f-timeout" type="number" value="30000"></label>
+      <label>无端口时等待（毫秒）<input id="f-nowait" type="number" value="1000"></label>
+    </div>
+    <label>自定义停止命令（可选，优先于默认停止方式）
+      <input id="f-stop" placeholder="例如：ammp shutdown"></label>
+    <label class="chk"><input id="f-enabled" type="checkbox" checked> 启用（在导航页显示）</label>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="tool-cancel">取消</button>
+      <button type="button" class="btn primary" id="tool-save">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 日志查看 -->
+<dialog id="dlg-log">
+  <h3 id="log-title">日志</h3>
+  <div class="log-meta" id="log-meta"></div>
+  <pre id="log-content"></pre>
+  <div class="dlg-actions">
+    <label class="chk inline"><input type="checkbox" id="log-auto" checked> 自动刷新</label>
+    <button type="button" class="btn" id="log-refresh">刷新</button>
+    <button type="button" class="btn primary" id="log-close">关闭</button>
+  </div>
+</dialog>
+
+<!-- 图标选择 -->
+<dialog id="dlg-emoji">
+  <h3>选择图标</h3>
+  <div id="emoji-tabs" class="emoji-tabs"></div>
+  <div id="emoji-grid" class="emoji-grid"></div>
+  <div class="dlg-actions">
+    <button type="button" class="btn" id="emoji-clear">清除（用默认 🔧）</button>
+    <span class="spacer"></span>
+    <button type="button" class="btn primary" id="emoji-close">关闭</button>
+  </div>
+</dialog>
+
+<!-- 确认框 -->
+<dialog id="dlg-confirm">
+  <h3>确认操作</h3>
+  <p id="confirm-text"></p>
+  <div class="dlg-actions">
+    <button type="button" class="btn" id="confirm-no">取消</button>
+    <button type="button" class="btn danger" id="confirm-yes">确定</button>
+  </div>
+</dialog>
+
+<div id="toasts"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
