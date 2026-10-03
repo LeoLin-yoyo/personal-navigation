@@ -352,8 +352,8 @@ async function startTool(id, name) {
   try {
     const r = await api(`/tools/${id}/start`, { method: "POST" });
     if (!r.ok) {
+      // 不自动弹出日志窗口，需要排查时点卡片上的「日志」按钮
       toast(`「${name}」启动失败：${r.message || "未知原因"}`, "error", 9000);
-      if (r.log_tail) showLogDlg(`日志 · ${name}`, `/tools/${id}/logs`, r.log_tail);
     } else if (r.already) {
       toast(r.message || "已在运行");
     } else {
