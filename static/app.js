@@ -64,6 +64,11 @@ function fmtTime(iso) {
   return iso ? iso.replace("T", " ") : "-";
 }
 
+/* 点卡片时是否由导航站代开浏览器页签（老数据无该字段按开启处理） */
+function autoOpen(t) {
+  return !!(t.open_browser ?? true);
+}
+
 function statusInfo(t) {
   const r = t.runtime || {};
   if (r.status === "running") {
@@ -120,7 +125,7 @@ function cardHtml(t) {
   const hasBackend = !!t.start_command || !!t.port;
   const stopBtn = (hasBackend && (st.cls === "running" || st.cls === "starting"))
     ? `<button class="btn small" data-action="stop" data-id="${t.id}">停止</button>` : "";
-  const startBtn = (!t.url && t.start_command && st.cls === "stopped")
+  const startBtn = (t.start_command && (!t.url || !autoOpen(t)) && st.cls === "stopped")
     ? `<button class="btn small primary" data-action="start" data-id="${t.id}">启动</button>` : "";
   const openBtn = t.url
     ? `<button class="btn small primary" data-action="open" data-id="${t.id}">打开</button>` : "";
@@ -271,6 +276,9 @@ function openToolDlg(t) {
   $("#f-nowait").value = t?.no_port_wait_ms ?? 1000;
   $("#f-sort").value = t?.sort_order ?? 0;
   $("#f-enabled").checked = t ? !!t.enabled : true;
+  $("#f-openbrowser").checked = t ? autoOpen(t) : true;
+  // 纯链接（无启动命令）谈不上自动打开与否，禁用复选框以免误配
+  $("#f-openbrowser").disabled = !$("#f-cmd").value.trim();
   $("#f-name").dataset.editing = t ? t.id : "";
   const groups = [...new Set(state.tools.map((x) => x.group_name))];
   $("#group-list").innerHTML = groups.map((g) => `<option value="${esc(g)}">`).join("");
@@ -293,6 +301,7 @@ function collectForm() {
     stop_command: $("#f-stop").value.trim(),
     sort_order: parseInt($("#f-sort").value, 10) || 0,
     enabled: $("#f-enabled").checked,
+    open_browser: $("#f-openbrowser").checked,
   };
 }
 
@@ -317,6 +326,7 @@ function toolPayload(t) {
     url: t.url, start_command: t.start_command, work_dir: t.work_dir, port: t.port,
     startup_timeout_ms: t.startup_timeout_ms, no_port_wait_ms: t.no_port_wait_ms,
     stop_command: t.stop_command, sort_order: t.sort_order, enabled: !!t.enabled,
+    open_browser: autoOpen(t),
   };
 }
 
@@ -453,8 +463,13 @@ $("#main").addEventListener("click", (e) => {
   const t = state.tools.find((x) => x.id == id);
   if (btn && !t && !["add", "plogs"].includes(btn.dataset.action)) return;
 
-  const act = btn ? btn.dataset.action
-    : (t ? (t.url || t.start_command ? (t.url ? "open" : "start") : null) : null);
+  // 卡片点击：关闭自动打开的工具只启动不弹页签；「打开」按钮是显式操作，始终照开
+  let act = btn ? btn.dataset.action : null;
+  if (!btn && t) {
+    if (t.url && autoOpen(t)) act = "open";
+    else if (t.start_command) act = "start";
+    else if (t.url) act = "open"; // 纯链接没有启动命令，该选项对它不生效
+  }
   if (!act) return;
 
   switch (act) {
@@ -491,6 +506,9 @@ $("#search").addEventListener("input", (e) => {
 
 $("#tool-save").addEventListener("click", saveTool);
 $("#tool-cancel").addEventListener("click", () => $("#dlg-tool").close());
+$("#f-cmd").addEventListener("input", () => {
+  $("#f-openbrowser").disabled = !$("#f-cmd").value.trim();
+});
 $("#icon-pick").addEventListener("click", openEmojiPicker);
 $("#emoji-tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-i]");

@@ -41,6 +41,7 @@
       <input id="f-url" placeholder="http://127.0.0.1:8000"></label>
     <label>启动命令（后台静默执行；留空 = 纯链接）
       <input id="f-cmd" placeholder="例如：npm run dev 或 ammp serve"></label>
+    <label class="chk"><input id="f-openbrowser" type="checkbox" checked> 点卡片自动打开浏览器页签（启动命令自己会开页面时请取消勾选）</label>
     <div class="grid2">
       <label>工作目录（启动命令的执行目录）<input id="f-cwd" placeholder="D:\projects\mytool"></label>
       <label>服务端口（就绪探测 + 防重复启动）<input id="f-port" type="number" placeholder="8000"></label>
@@ -92,6 +93,6 @@
 </dialog>
 
 <div id="toasts"></div>
-<script src="/static/app.js?v=2"></script>
+<script src="/static/app.js?v=3"></script>
 </body>
 </html>

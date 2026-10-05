@@ -27,6 +27,9 @@ class ToolIn(BaseModel):
     stop_command: str = ""
     sort_order: int = 0
     enabled: bool = True
+    # 点卡片时是否由导航站自动打开浏览器页签；
+    # 启动命令自己会开页面的工具请设为 false，避免重复开两个页签
+    open_browser: bool = True
 
     @field_validator("name")
     @classmethod

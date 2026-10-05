@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS tools (
   stop_command TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1,
+  open_browser INTEGER NOT NULL DEFAULT 1,
   extra TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -73,7 +74,7 @@ _SEED_TOOLS = [
 
 TOOL_FIELDS = ("name", "description", "group_name", "icon", "url", "start_command",
                "work_dir", "port", "startup_timeout_ms", "no_port_wait_ms",
-               "stop_command", "sort_order", "enabled")
+               "stop_command", "sort_order", "enabled", "open_browser")
 
 
 def _now() -> str:
@@ -90,9 +91,18 @@ def _conn() -> sqlite3.Connection:
     return conn
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """轻量迁移：老库缺新增列时补上（均有默认值，ALTER 即可）。"""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(tools)")}
+    if "open_browser" not in cols:
+        conn.execute(
+            "ALTER TABLE tools ADD COLUMN open_browser INTEGER NOT NULL DEFAULT 1")
+
+
 def init_db() -> None:
     with _conn() as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
         if conn.execute("SELECT COUNT(*) AS c FROM tools").fetchone()["c"] == 0:
             conn.executemany(
                 """INSERT INTO tools
@@ -122,19 +132,20 @@ def get_tool(tool_id: int) -> dict | None:
 def create_tool(data: dict) -> dict:
     values = {k: data.get(k) for k in TOOL_FIELDS}
     values["enabled"] = int(bool(values.get("enabled", True)))
+    values["open_browser"] = int(bool(values.get("open_browser", True)))
     now = _now()
     with _conn() as conn:
         cur = conn.execute(
             """INSERT INTO tools
                (name, description, group_name, icon, url, start_command, work_dir,
                 port, startup_timeout_ms, no_port_wait_ms, stop_command, sort_order,
-                enabled, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                enabled, open_browser, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (values["name"], values["description"], values["group_name"],
              values["icon"], values["url"], values["start_command"],
              values["work_dir"], values["port"], values["startup_timeout_ms"],
              values["no_port_wait_ms"], values["stop_command"], values["sort_order"],
-             values["enabled"], now, now),
+             values["enabled"], values["open_browser"], now, now),
         )
         conn.commit()
         tool_id = cur.lastrowid
@@ -144,6 +155,7 @@ def create_tool(data: dict) -> dict:
 def update_tool(tool_id: int, data: dict) -> dict:
     values = {k: data.get(k) for k in TOOL_FIELDS}
     values["enabled"] = int(bool(values.get("enabled", True)))
+    values["open_browser"] = int(bool(values.get("open_browser", True)))
     sets = ", ".join(f"{k}=?" for k in TOOL_FIELDS)
     with _conn() as conn:
         conn.execute(
